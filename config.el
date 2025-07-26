@@ -1,8 +1,10 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;;;===========
+;;;=============
+;;;== Default ==
+;;;=============
+
 ;;;== Basic ==
-;;;===========
 ;; credentials
 (setq user-full-name "atwist227"
       user-mail-address "atwist227@github.com")
@@ -21,12 +23,10 @@
 (setq doom-theme 'doom-one)
 
 (if (eq system-type 'gnu/linux)
-    ;; use 'progn' to packup multi command
     (progn
-      (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0)
-            doom-variable-pitch-font (font-spec :family "DejaVu Sans" :size 14.0)
-            doom-symbol-font (font-spec :family "JuliaMono" :size 16.0)
-            doom-big-font (font-spec :family "JetBrainsMono NF" :size 24.0))))
+      (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
+      ;; set fontset for hanji
+      (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC"))))
 
 ;; display line number
 (setq display-line-numbers-type t)
@@ -115,4 +115,5 @@
   ;; enable the /context/ mode for all buffers
   (sis-global-context-mode t)
   ;; enable the /inline english/ mode for all buffers
-  (sis-global-inline-mode t))
+  ;; (sis-global-inline-mode t)
+  )
