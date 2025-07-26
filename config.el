@@ -20,11 +20,13 @@
 ;; Theme & Fonts
 (setq doom-theme 'doom-one)
 
-(if (featurep :system 'gun/linux)
-    (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0 :weight 'light)
-          doom-variable-pitch-font (font-spec :family "DejaVu Sans" :size 14.0)
-          doom-symbol-font (font-spec :family "JuliaMono")
-          doom-big-font (font-spec :family "JetBrainsMono NF" :size 24.0)))
+(if (eq system-type 'gnu/linux)
+    ;; use 'progn' to packup multi command
+    (progn
+      (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0)
+            doom-variable-pitch-font (font-spec :family "DejaVu Sans" :size 14.0)
+            doom-symbol-font (font-spec :family "JuliaMono" :size 16.0)
+            doom-big-font (font-spec :family "JetBrainsMono NF" :size 24.0))))
 
 ;; display line number
 (setq display-line-numbers-type t)
@@ -95,14 +97,14 @@
   ;;  ((text-mode prog-mode) . sis-inline-mode))
 
   :config
-  (if (featurep :system 'darwin)
+  (if (eq system-type 'darwin)
     (sis-ism-lazyman-config
      ;; English input source
      "com.apple.keylayout.US"
      ;; Other language input source
      "com.sogou.inputmethod.sogou.pinyin"))
 
-  (if (featurep :system 'gun/linux)
+  (if (eq system-type 'gnu/linux)
     (sis-ism-lazyman-config "1" "2" 'fcitx5))
 
   ;; --- Global settings that apply to all OSes ---
