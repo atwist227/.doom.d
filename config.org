@@ -1,0 +1,150 @@
+#+TITLE: Doom Emacs Configuration
+#+AUTHOR: atwist227
+#+PROPERTY: header-args:emacs-lisp :tangle "config.el"
+本文档是我的 Doom Emacs 配置文件
+
+* 基础设置 (General Settings)
+** 提速
+#+begin_src emacs-lisp
+;;; config.el -*- lexical-binding: t; -*-
+#+end_src
+** 个人信息 (Personal Information)
+用于 Emacs 的一些基本用户信息，比如 Git 提交时的作者信息。
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "atwist227"
+      user-mail-address "atwist227@github.com")
+#+END_SRC
+** 编辑行为 (Editing Behavior)
+*** 开启自动保存和备份
+#+BEGIN_SRC emacs-lisp
+(setq auto-save-default t
+      make-backup-files t)
+#+END_SRC
+*** 关闭退出 Emacs 时的确认提示
+#+BEGIN_SRC emacs-lisp
+(setq confirm-kill-emacs nil)
+#+END_SRC
+** 外观 (Appearance)
+*** 主题
+设置 Doom Emacs 的主题。
+#+BEGIN_SRC emacs-lisp
+(setq doom-theme 'doom-one)
+#+END_SRC
+*** 字体
+#+BEGIN_SRC emacs-lisp
+(if (eq system-type 'gnu/linux)
+    (progn
+      (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
+      (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC"))))
+#+END_SRC
+*** 开启行号显示
+#+BEGIN_SRC emacs-lisp
+(setq display-line-numbers-type t)
+#+END_SRC
+* Doom 模块配置 (Doom Module Configuration)
+** ：input
+*** chinese
+在 `latex-mode` 的数学环境 ($...$ 或 $$...$$) 中自动切换到英文。"
+#+BEGIN_SRC emacs-lisp
+(defun my/pyim-probe-latex-mode ()
+  (and (derived-mode-p 'latex-mode 'org-mode)
+       (fboundp 'texmathp)
+       (texmathp)))
+#+END_SRC
+
+用于插入顿号“、”的辅助函数。
+#+BEGIN_SRC emacs-lisp
+(defun my/insert-pause-character ()
+  (interactive)
+  (insert "、"))
+#+END_SRC
+
+主要設置
+#+BEGIN_SRC emacs-lisp
+(after! pyim
+  :config
+  (setq pyim-dicts
+      '((:name "bigdict" :file "~/.doom.d/pyim-dict/pyim-bigdict.pyim")
+        (:name "math" :file "~/.doom.d/pyim-dict/sogou-math.pyim")))
+  (setq pyim-cloudim 'baidu) ;; 设置云拼音
+  (setq-default pyim-punctuation-translate-p '(no)); 总是输入半角标点
+  (setq-default pyim-punctuation-half-width-functions
+                '(pyim-probe-punctuation-line-beginning
+                  pyim-probe-punctuation-after-punctuation))
+  (setq-default pyim-english-input-switch-functions
+                '(pyim-probe-isearch-mode ;; 在 minibuffer 中（例如 M-x 执行命令时）使用英文
+                  pyim-probe-evil-normal-mode  ;; 在 Doom Emacs 的 evil normal 模式下使用英文
+                  pyim-probe-program-mode  ;; 在写代码和标记语言时，大部分情况使用英文
+                  pyim-probe-org-structure-template  ;; 在 Org-mode 的特殊结构，如 #+BEGIN_SRC 中使用英文
+                  pyim-probe-org-latex-mode  ;; 在 Org-mode 的 LaTeX 片段中使用英文，例如 $...$
+                  my/pyim-probe-latex-mode))) ;;LaTeX 定制的数学环境探针
+#+END_SRC
+**** 快捷键
+将 leader key + , (默认即 SPC ,) 设置为插入顿号
+#+BEGIN_SRC emacs-lisp
+(map! :leader
+      :desc "Insert pause character"
+      "," #'my/insert-pause-character)
+#+END_SRC
+
+<SPC><TAB>切换输入法,<SPC><\>依旧可以使用
+#+BEGIN_SRC emacs-lisp
+(map! :leader
+      :desc "Toggle input method"
+      "TAB" #'toggle-input-method)
+#+END_SRC
+** :editor
+*** evil
+#+BEGIN_SRC emacs-lisp
+(after! evil
+  (setq evil-move-cursor-back nil     ; don't move the block cursor when toggling insert mode
+        evil-kill-on-visual-paste nil ; don't put overwritten text in the kill ring
+        evil-want-fine-undo t
+        evil-move-beyond-eol t
+        ;; evil-want-minibuffer t
+        +evil-want-o/O-to-continue-comments nil))
+#+END_SRC
+** ：lang
+*** latex
+#+BEGIN_SRC emacs-lisp
+(after! tex
+  ;; 启用 pdf-tools 显示 PDF
+  (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+
+  ;; .bib 文件的位置
+  ;; (setq reftex-default-bibliography "~/Seafile/THU研究生/Notes_latex/ref.bib")
+
+  (setq TeX-electric-sub-and-superscript t)
+  )
+#+END_SRC
+**** cdlatex
+#+BEGIN_SRC emacs-lisp
+(after! cdlatex
+  (map! :map cdlatex-mode-map
+        :i "TAB" #'cdlatex-tab)
+
+  (setq cdlatex-math-modify-alist
+        '((?b "\\mathbb" nil t nil nil)
+          (?k "\\mathfrak" nil t nil nil)
+          (?m "\\mathrr" nil t nil nil)
+          (?o "\\operatorname" nil t nil nil)
+          )
+        cdlatex-math-symbol-alist
+        '((?e ("\\varepsilon" "\\epsilon"))
+          (?f ("\\varphi" "\\phi"))
+          (?0 ("\\varnothing" "\\emptyset"))
+          )
+       ;; cdlatex-command-alist ;; expand with <TAB>
+       ;; '(("eqn" "Insert an EQUATION* environment template" "" cdlatex-environment ("equation*") t nil)
+       ;;   ("aln" "Insert an ALIGN* environment template" "" cdlatex-environment ("align*") t nil)
+       ;;   ("op" "Insert \\operatorname{}()" "\\operatorname{?}()" cdlatex-position-cursor nil nil t)
+       ;;  )
+  ))
+#+END_SRC
+* 其他 (Miscellaneous)
+** wsl
+*** 修复 Wayland 环境下的 PGTK 算术溢出错误
+#+BEGIN_SRC emacs-lisp
+(setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
+#+END_SRC
