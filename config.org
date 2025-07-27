@@ -1,10 +1,15 @@
-#+TITLE: Doom Emacs Configuration
+#+TITLE: Doom emacs config
 #+AUTHOR: atwist227
-#+PROPERTY: header-args:emacs-lisp :tangle "config.el"
-本文档是我的 Doom Emacs 配置文件
+#+PROPERTY: header-args:emacs-lisp :tangle config.el
+
+本文档是我的 Doom Emacs 配置文件.
+使用命令 ~M-x org-babel-tangle~ 生成配置文件。
+
+* TODO 学习自动生成配置文件的方法，参考文档 [[https://tecosaur.github.io/emacs-config/config.html#personal-information][Doom Emacs Configuration]]
 
 * 基础设置 (General Settings)
-** 提速
+** 启用词法绑定
+与动态绑定 (Dynamic Binding) 不同，不受调用栈影响。
 #+begin_src emacs-lisp
 ;;; config.el -*- lexical-binding: t; -*-
 #+end_src
@@ -35,64 +40,13 @@
 (if (eq system-type 'gnu/linux)
     (progn
       (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
-      (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC"))))
+      (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))))
 #+END_SRC
 *** 开启行号显示
 #+BEGIN_SRC emacs-lisp
 (setq display-line-numbers-type t)
 #+END_SRC
 * Doom 模块配置 (Doom Module Configuration)
-** ：input
-*** chinese
-在 `latex-mode` 的数学环境 ($...$ 或 $$...$$) 中自动切换到英文。"
-#+BEGIN_SRC emacs-lisp
-(defun my/pyim-probe-latex-mode ()
-  (and (derived-mode-p 'latex-mode 'org-mode)
-       (fboundp 'texmathp)
-       (texmathp)))
-#+END_SRC
-
-用于插入顿号“、”的辅助函数。
-#+BEGIN_SRC emacs-lisp
-(defun my/insert-pause-character ()
-  (interactive)
-  (insert "、"))
-#+END_SRC
-
-主要設置
-#+BEGIN_SRC emacs-lisp
-(after! pyim
-  :config
-  (setq pyim-dicts
-      '((:name "bigdict" :file "~/.doom.d/pyim-dict/pyim-bigdict.pyim")
-        (:name "math" :file "~/.doom.d/pyim-dict/sogou-math.pyim")))
-  (setq pyim-cloudim 'baidu) ;; 设置云拼音
-  (setq-default pyim-punctuation-translate-p '(no)); 总是输入半角标点
-  (setq-default pyim-punctuation-half-width-functions
-                '(pyim-probe-punctuation-line-beginning
-                  pyim-probe-punctuation-after-punctuation))
-  (setq-default pyim-english-input-switch-functions
-                '(pyim-probe-isearch-mode ;; 在 minibuffer 中（例如 M-x 执行命令时）使用英文
-                  pyim-probe-evil-normal-mode  ;; 在 Doom Emacs 的 evil normal 模式下使用英文
-                  pyim-probe-program-mode  ;; 在写代码和标记语言时，大部分情况使用英文
-                  pyim-probe-org-structure-template  ;; 在 Org-mode 的特殊结构，如 #+BEGIN_SRC 中使用英文
-                  pyim-probe-org-latex-mode  ;; 在 Org-mode 的 LaTeX 片段中使用英文，例如 $...$
-                  my/pyim-probe-latex-mode))) ;;LaTeX 定制的数学环境探针
-#+END_SRC
-**** 快捷键
-将 leader key + , (默认即 SPC ,) 设置为插入顿号
-#+BEGIN_SRC emacs-lisp
-(map! :leader
-      :desc "Insert pause character"
-      "," #'my/insert-pause-character)
-#+END_SRC
-
-<SPC><TAB>切换输入法,<SPC><\>依旧可以使用
-#+BEGIN_SRC emacs-lisp
-(map! :leader
-      :desc "Toggle input method"
-      "TAB" #'toggle-input-method)
-#+END_SRC
 ** :editor
 *** evil
 #+BEGIN_SRC emacs-lisp
@@ -142,9 +96,35 @@
        ;;  )
   ))
 #+END_SRC
+* 其他包 (other packages)
+** emacs-rime
+项目地址 [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
+#+begin_src emacs-lisp
+(after! rime
+  (setq default-input-method "rime")
+  (setq rime-show-candidate 'posframe)
+  (setq rime-user-data-dir "~/.local/share/rime/rime-data/") ; FIXME 根据主机配置调整
+  (setq rime-disable-predicates
+        '(rime-predicate-evil-mode-p
+          rime-predicate-org-latex-mode-p
+          rime-predicate-tex-math-or-command-p
+          rime-predicate-in-code-string-p
+          rime-predicate-after-alphabet-char-p
+          rime-predicate-space-after-cc-p
+          rime-predicate-punctuation-line-begin-p
+          rime-predicate-punctuation-after-ascii-p))
+  (setq mode-line-mule-info '((:eval (rime-lighter))))); 临时启用英文提示
+#+end_src
 * 其他 (Miscellaneous)
 ** wsl
 *** 修复 Wayland 环境下的 PGTK 算术溢出错误
 #+BEGIN_SRC emacs-lisp
 (setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
+#+END_SRC
+** 快捷键设置
+*** <SPC><TAB>切换输入法,<SPC><\>依旧可以使用
+#+BEGIN_SRC emacs-lisp
+(map! :leader
+      :desc "Toggle input method"
+      "TAB" #'toggle-input-method)
 #+END_SRC
