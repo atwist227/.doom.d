@@ -6,8 +6,6 @@
 本文档是我的 Doom Emacs 配置文件.
 使用命令 ~M-x org-babel-tangle~ 生成配置文件。
 
-* TODO 学习自动生成配置文件的方法，参考文档 [[https://tecosaur.github.io/emacs-config/config.html#personal-information][Doom Emacs Configuration]]
-
 * 基础设置 (General Settings)
 ** 启用词法绑定
 与动态绑定 (Dynamic Binding) 不同，不受调用栈影响。
@@ -37,12 +35,22 @@
 (setq doom-theme 'doom-one)
 #+END_SRC
 *** 字体
+**** Windows 系统
+:PROPERTIES:
+:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:END:
 #+BEGIN_SRC emacs-lisp
-(if (eq system-type 'gnu/linux)
-    (progn
-      (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
-      (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))))
+(setq doom-font (font-spec :family "SauceCodePro NF" :size 13.0))
+(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans SC" :size 14.0))
 #+END_SRC
+**** Linux 系统
+:PROPERTIES:
+:header-args: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+:END:
+#+begin_src emacs-lisp
+(setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
+(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))))
+#+end_src
 *** 开启行号显示
 #+BEGIN_SRC emacs-lisp
 (setq display-line-numbers-type t)
@@ -59,20 +67,27 @@
         ;; evil-want-minibuffer t
         +evil-want-o/O-to-continue-comments nil))
 #+END_SRC
-** ：lang
+** :lang
 *** latex
-#+BEGIN_SRC emacs-lisp
+Linux 下使用 pdf-tools
+#+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 (after! tex
-  ;; 启用 pdf-tools 显示 PDF
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-
-  ;; .bib 文件的位置
-  ;; (setq reftex-default-bibliography "~/Seafile/THU研究生/Notes_latex/ref.bib")
-
-  (setq TeX-electric-sub-and-superscript t)
-  )
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 #+END_SRC
+windows 下使用 Sumatra PDF
+#+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
+(after! tex
+  (setq TeX-view-program-list
+        '(("Sumatra PDF" ("\"C:/Program Files/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
+  (assq-delete-all (quote output-pdf) TeX-view-program-selection)
+  (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF")))
+#+end_src
+输入 ^ _ 后自动插入花括号
+#+begin_src emacs-lisp
+(after! tex
+  (setq TeX-electric-sub-and-superscript t))
+#+end_src
 **** cdlatex
 #+BEGIN_SRC emacs-lisp
 (after! cdlatex
@@ -98,12 +113,17 @@
   ))
 #+END_SRC
 *** org
-设置 org 文件夹
-#+begin_src emacs-lisp
-(setq org-directory "~/Dropbox/org/")
+#+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+(setq org-directory "~/Nut Store/org/")
+#+end_src
+#+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
+(setq org-directory "~/Nutstore/1/org")
 #+end_src
 * 其他包 (other packages)
 ** emacs-rime
+:PROPERTIES:
+:header-args: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+:END:
 项目地址 [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
 设置默认输入法为 rime
 #+begin_src emacs-lisp
@@ -125,15 +145,45 @@
           rime-predicate-punctuation-after-ascii-p))
   (setq mode-line-mule-info '((:eval (rime-lighter))))); 临时启用英文提示
 #+end_src
+** smart-input-source
+:PROPERTIES:
+:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:END:
+nput-source
+项目地址 [[https://github.com/laishulu/emacs-smart-input-source/tree/master][sis]]
+windows 11 系统下要开启输入法兼容性模式
+#+begin_src emacs-lisp
+(use-package! sis
+  :config
+  ;; 启用 /光标颜色/ 模式
+  (sis-global-cursor-color-mode t)
+  ;; 启用 /respect/ 模式
+  (sis-global-respect-mode t)
+  ;; 为所有缓冲区启用 /context/ 模式
+  (sis-global-context-mode t)
+  ;; 为所有缓冲区启用 /inline english/ 模式
+  (sis-global-inline-mode t))
+#+end_src
 * 其他 (Miscellaneous)
-** wsl
+** windows
+:PROPERTIES:
+:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:END:
+在windows系统下需要指定临时文件夹
+#+begin_src emacs-lisp
+(setq temporary-file-directory "d:/.emacs_temp")
+#+end_src
+** wsl(已经弃用)
+:PROPERTIES:
+:header-args: :tangle no
+:END:
 *** 修复 Wayland 环境下的 PGTK 算术溢出错误
 #+BEGIN_SRC emacs-lisp
 (setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
 #+END_SRC
 ** 快捷键设置
 *** <SPC><TAB>切换输入法,<SPC><\>依旧可以使用
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (map! :leader
       :desc "Toggle input method"
       "TAB" #'toggle-input-method)
