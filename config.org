@@ -1,6 +1,7 @@
 #+TITLE: Doom emacs config
 #+AUTHOR: atwist227
 #+PROPERTY: header-args:emacs-lisp :tangle config.el
+#+STARTUP: show2levels
 
 本文档是我的 Doom Emacs 配置文件.
 使用命令 ~M-x org-babel-tangle~ 生成配置文件。
@@ -96,12 +97,21 @@
        ;;  )
   ))
 #+END_SRC
+*** org
+设置 org 文件夹
+#+begin_src emacs-lisp
+(setq org-directory "~/Dropbox/org/")
+#+end_src
 * 其他包 (other packages)
 ** emacs-rime
 项目地址 [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
+设置默认输入法为 rime
+#+begin_src emacs-lisp
+(setq default-input-method "rime")
+#+end_src
+基本设置
 #+begin_src emacs-lisp
 (after! rime
-  (setq default-input-method "rime")
   (setq rime-show-candidate 'posframe)
   (setq rime-user-data-dir "~/.local/share/rime/rime-data/") ; FIXME 根据主机配置调整
   (setq rime-disable-predicates
