@@ -3,7 +3,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle config.el
 #+STARTUP: show2levels
 
-本文档是我的 Doom Emacs 配置文件.
+本文档是我的 Doom Emacs 配置文件。
 使用命令 ~M-x org-babel-tangle~ 生成配置文件。
 
 * 基础设置 (General Settings)
@@ -35,19 +35,22 @@
 (setq doom-theme 'doom-one)
 #+END_SRC
 *** 字体
-**** Windows 系统
-:PROPERTIES:
-:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
-:END:
-#+BEGIN_SRC emacs-lisp
+**** 安装 Nerd 字体
+Linux 下 =JetBrains Mono= 字体下载脚本
+#+begin_src bash
+mkdir -p ~/.local/share/fonts
+wget -O ~/.local/share/fonts/JetBrainsMono.zip https://download.jetbrains.com/fonts/JetBrainsMono.zip
+unzip ~/.local/share/fonts/JetBrainsMono.zip -d ~/.local/share/fonts
+rm ~/.local/share/fonts/JetBrainsMono.zip
+fc-cache -fv
+#+end_src
+**** Windows 系统字体配置
+#+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
 (setq doom-font (font-spec :family "SauceCodePro NF" :size 13.0))
 (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans SC" :size 14.0))
 #+END_SRC
-**** Linux 系统
-:PROPERTIES:
-:header-args: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
-:END:
-#+begin_src emacs-lisp
+**** Linux 系统字体配置
+#+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
 (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))))
 #+end_src
@@ -69,21 +72,30 @@
 #+END_SRC
 ** :lang
 *** latex
-Linux 下使用 pdf-tools
-#+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+**** pdf 预览
+pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emacs 中执行命令 ~M-x pdf-tools-install~ 即可安装。
+关于 pdf-tools 的配置。
+#+BEGIN_SRC emacs-lisp :header-args:emacs-lisp: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 (after! tex
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 #+END_SRC
-windows 下使用 Sumatra PDF
-#+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
+***** TODO windows 下 pdf 预览设置
+在 windows 中可通过 msys2 下载预编译的 epdfinfo, 在 msys2 终端中运行如下[[https://packages.msys2.org/packages/mingw-w64-x86_64-emacs-pdf-tools-server?repo=mingw64][命令]]:
+#+begin_src bash
+pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
+#+end_src
+然后将 ~epdfinfo.exe~ 所在文件夹加入 PATH.
+但是这个安装不能激活双向跳转，不知道哪里出了问题，目前使用 Sumatra Pdf
+#+begin_src emacs-lisp :header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
 (after! tex
   (setq TeX-view-program-list
         '(("Sumatra PDF" ("\"C:/Program Files/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
   (assq-delete-all (quote output-pdf) TeX-view-program-selection)
   (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF")))
 #+end_src
-输入 ^ _ 后自动插入花括号
+在 Sumatra PDF “设置” > “选项” > “设置反向搜索命令行” 中配置 ~"C:\tools\emacs\bin\emacsclientw.exe" -n +%l "%f"~ 其中 ~emacslientw.exe~ 位置根据实际情况调整。
+**** 输入 ^ _ 后自动插入花括号
 #+begin_src emacs-lisp
 (after! tex
   (setq TeX-electric-sub-and-superscript t))
@@ -113,6 +125,7 @@ windows 下使用 Sumatra PDF
   ))
 #+END_SRC
 *** org
+**** 默认 org 文件夹位置
 #+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 (setq org-directory "~/Nut Store/org/")
 #+end_src
@@ -120,16 +133,16 @@ windows 下使用 Sumatra PDF
 (setq org-directory "~/Nutstore/1/org")
 #+end_src
 * 其他包 (other packages)
-** emacs-rime
+** [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
 :PROPERTIES:
-:header-args: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+:header-args:emacs-lisp: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 :END:
-项目地址 [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
-设置默认输入法为 rime
+仅在 linux 系统下使用（为了匹配 wsl 选择了 emacs 内置输入法）。
+*** 设置默认输入法为 rime
 #+begin_src emacs-lisp
 (setq default-input-method "rime")
 #+end_src
-基本设置
+*** 基本设置
 #+begin_src emacs-lisp
 (after! rime
   (setq rime-show-candidate 'posframe)
@@ -145,13 +158,11 @@ windows 下使用 Sumatra PDF
           rime-predicate-punctuation-after-ascii-p))
   (setq mode-line-mule-info '((:eval (rime-lighter))))); 临时启用英文提示
 #+end_src
-** smart-input-source
+** [[https://github.com/laishulu/emacs-smart-input-source/tree/master][smart-input-source]]
 :PROPERTIES:
-:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
 :END:
-nput-source
-项目地址 [[https://github.com/laishulu/emacs-smart-input-source/tree/master][sis]]
-windows 11 系统下要开启输入法兼容性模式
+注意！ windows 11 系统下要开启输入法兼容性模式
 #+begin_src emacs-lisp
 (use-package! sis
   :config
@@ -167,22 +178,24 @@ windows 11 系统下要开启输入法兼容性模式
 * 其他 (Miscellaneous)
 ** windows
 :PROPERTIES:
-:header-args: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
 :END:
-在windows系统下需要指定临时文件夹
+*** 指定临时文件夹
+windows 系统访问权限的原因 emacs 不一定能访问 temp 文件夹，这会导致 org-latex-preview 无法工作，故重新指定临时文件夹。参考[[https://emacs-china.org/t/emacs/21689][emacs 笔记问题（数学、物理），希望大家不吝赐教 （预览以及插入问题）。]]
 #+begin_src emacs-lisp
 (setq temporary-file-directory "d:/.emacs_temp")
 #+end_src
 ** wsl(已经弃用)
 :PROPERTIES:
-:header-args: :tangle no
+:header-args:emacs-lisp: :tangle no
 :END:
 *** 修复 Wayland 环境下的 PGTK 算术溢出错误
+也是 org-latex-preview 使用中发现的问题，参考[[https://emacs-china.org/t/wslg-x-display-mm-height-0/22547/1][WSLg下 (x-display-mm-height)返回0（异常）]]
 #+BEGIN_SRC emacs-lisp
 (setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
 #+END_SRC
 ** 快捷键设置
-*** <SPC><TAB>切换输入法,<SPC><\>依旧可以使用
+*** <SPC><TAB>切换输入法,<SPC><\>依旧可以使用(弃用)
 #+BEGIN_SRC emacs-lisp :tangle no
 (map! :leader
       :desc "Toggle input method"
