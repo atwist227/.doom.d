@@ -52,7 +52,7 @@ fc-cache -fv
 **** Linux 系统字体配置
 #+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
 (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
-(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))))
+(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))
 #+end_src
 *** 开启行号显示
 #+BEGIN_SRC emacs-lisp
@@ -127,7 +127,7 @@ pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
 *** org
 **** 默认 org 文件夹位置
 #+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
-(setq org-directory "~/Nut Store/org/")
+(setq org-directory "~/Nutstore Files/org")
 #+end_src
 #+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
 (setq org-directory "~/Nutstore/1/org")
