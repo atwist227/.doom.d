@@ -7,10 +7,4 @@
 (package-initialize)
 
 ;; Chinese input support
-(if (eq system-type 'gnu/linux)
-    (progn
-      (package! rime)
-      (package! posframe)))
-
-(if (eq system-type 'windows-nt)
-    (package! sis))
+(package! sis)

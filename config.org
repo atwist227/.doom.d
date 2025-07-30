@@ -133,9 +133,9 @@ pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
 (setq org-directory "~/Nutstore/1/org")
 #+end_src
 * 其他包 (other packages)
-** [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]]
+** [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]] (弃用, 改用 sis 更统一和方便设置)
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+:header-args:emacs-lisp: :tangle no
 :END:
 仅在 linux 系统下使用（为了匹配 wsl 选择了 emacs 内置输入法）。
 *** 设置默认输入法为 rime
@@ -160,11 +160,14 @@ pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
 #+end_src
 ** [[https://github.com/laishulu/emacs-smart-input-source/tree/master][smart-input-source]]
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+:header-args:emacs-lisp: :tangle yes
 :END:
 注意！ windows 11 系统下要开启输入法兼容性模式
 #+begin_src emacs-lisp
 (use-package! sis
+  :init
+  (if (eq system-type 'gnu/linux)
+      (sis-ism-lazyman-config "1" "2" 'fcitx5))
   :config
   ;; 启用 /光标颜色/ 模式
   (sis-global-cursor-color-mode t)
