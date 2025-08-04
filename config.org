@@ -12,28 +12,30 @@
 #+begin_src emacs-lisp
 ;;; config.el -*- lexical-binding: t; -*-
 #+end_src
-** 个人信息 (Personal Information)
-用于 Emacs 的一些基本用户信息，比如 Git 提交时的作者信息。
-#+BEGIN_SRC emacs-lisp
-(setq user-full-name "atwist227"
-      user-mail-address "atwist227@github.com")
-#+END_SRC
+
 ** 编辑行为 (Editing Behavior)
 *** 开启自动保存和备份
 #+BEGIN_SRC emacs-lisp
 (setq auto-save-default t
       make-backup-files t)
 #+END_SRC
+
 *** 关闭退出 Emacs 时的确认提示
 #+BEGIN_SRC emacs-lisp
 (setq confirm-kill-emacs nil)
 #+END_SRC
+
 ** 外观 (Appearance)
 *** 主题
 设置 Doom Emacs 的主题。
 #+BEGIN_SRC emacs-lisp
 (setq doom-theme 'doom-one)
 #+END_SRC
+*** 窗口大小
+#+begin_src emacs-lisp
+(add-to-list 'initial-frame-alist '(width . 80))
+(add-to-list 'initial-frame-alist '(height . 36))
+#+end_src
 *** 字体
 **** 安装 Nerd 字体
 Linux 下 =JetBrains Mono= 字体下载脚本
@@ -73,6 +75,8 @@ fc-cache -fv
 ** :lang
 *** latex
 **** pdf 预览
+***** TODO pdf-tools
+不喜欢 pdf-tools 非平滑滚动，以后更换
 pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emacs 中执行命令 ~M-x pdf-tools-install~ 即可安装。
 关于 pdf-tools 的配置。
 #+BEGIN_SRC emacs-lisp :header-args:emacs-lisp: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
@@ -80,21 +84,18 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
   (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 #+END_SRC
-***** TODO windows 下 pdf 预览设置
-在 windows 中可通过 msys2 下载预编译的 epdfinfo, 在 msys2 终端中运行如下[[https://packages.msys2.org/packages/mingw-w64-x86_64-emacs-pdf-tools-server?repo=mingw64][命令]]:
-#+begin_src bash
-pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
-#+end_src
-然后将 ~epdfinfo.exe~ 所在文件夹加入 PATH.
-但是这个安装不能激活双向跳转，不知道哪里出了问题，目前使用 Sumatra Pdf
-#+begin_src emacs-lisp :header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
+***** Sumatra PDF (windows)
+*正向跳转配置*
+#+begin_src emacs-lisp
 (after! tex
   (setq TeX-view-program-list
-        '(("Sumatra PDF" ("\"C:/Program Files/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
-  (assq-delete-all (quote output-pdf) TeX-view-program-selection)
+        '(("Sumatra PDF" ("\"%LOCALAPPDATA%/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
   (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF")))
 #+end_src
-在 Sumatra PDF “设置” > “选项” > “设置反向搜索命令行” 中配置 ~"C:\tools\emacs\bin\emacsclientw.exe" -n +%l "%f"~ 其中 ~emacslientw.exe~ 位置根据实际情况调整。
+*反向跳转* 需要在 Sumatra PDF “设置” > “选项” > “设置反向搜索命令行” 中配置
+#+begin_src bash
+"C:\msys64\mingw64\bin\emacsclientw.exe" -n +%l "%f"
+#+end_src
 **** 输入 ^ _ 后自动插入花括号
 #+begin_src emacs-lisp
 (after! tex
@@ -125,12 +126,37 @@ pacman -S mingw-w64-x86_64-emacs-pdf-tools-server
   ))
 #+END_SRC
 *** org
-**** 默认 org 文件夹位置
-#+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
-(setq org-directory "~/Nutstore Files/org")
-#+end_src
+**** +roam2
+***** Directories
 #+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
-(setq org-directory "~/Nutstore/1/org")
+(after! org-roam
+  :init
+  (setq org-roam-directory "~/Seafile/Projects/org/pages")
+  (setq org-roam-dailies-directory "../journals")
+  :custom
+  (setq org-id-link-to-org-use-id 'create-if-interactive)
+  )
+#+end_src
+***** org-roam-ui
+#+begin_src emacs-lisp
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+#+end_src
+**** 关闭上下标预览
+#+begin_src emacs-lisp
+(setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
 * 其他包 (other packages)
 ** [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]] (弃用, 改用 sis 更统一和方便设置)
