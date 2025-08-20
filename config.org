@@ -13,7 +13,25 @@
 ;;; config.el -*- lexical-binding: t; -*-
 #+end_src
 
+** literature config
+#+begin_src emacs-lisp
+;; 自动将 config.org tangle 成 config.el
+(defun my/tangle-config-org ()
+  "Tangle config.org into config.el whenever saving."
+  (when (and buffer-file-name
+             (string-equal (file-truename buffer-file-name)
+                           (file-truename (expand-file-name "config.org" doom-user-dir))))
+    (let ((org-confirm-babel-evaluate nil))
+      (org-babel-tangle)
+      ;; (message "Tangling %s → config.el done." buffer-file-name)
+      )))
+
+(add-hook 'after-save-hook #'my/tangle-config-org)
+#+end_src
 ** 编辑行为 (Editing Behavior)
+#+begin_src emacs-lisp
+(show-smartparens-mode 1)
+#+end_src
 *** 开启自动保存和备份
 #+BEGIN_SRC emacs-lisp
 (setq auto-save-default t
@@ -30,6 +48,7 @@
 设置 Doom Emacs 的主题。
 #+BEGIN_SRC emacs-lisp
 (setq doom-theme 'doom-one)
+;; (setq doom-theme 'doom-vibrant)
 #+END_SRC
 *** 窗口大小
 #+begin_src emacs-lisp
@@ -60,6 +79,12 @@ fc-cache -fv
 #+BEGIN_SRC emacs-lisp
 (setq display-line-numbers-type t)
 #+END_SRC
+
+菜单栏和标签栏
+#+begin_src emacs-lisp
+(menu-bar-mode 1)
+(tab-bar-mode 1)
+#+end_src
 * Doom 模块配置 (Doom Module Configuration)
 ** :editor
 *** evil
@@ -72,6 +97,11 @@ fc-cache -fv
         ;; evil-want-minibuffer t
         +evil-want-o/O-to-continue-comments nil))
 #+END_SRC
+*** snippets
+#+begin_src emacs-lisp :tangle no
+(setq yas-snippet-dirs '((concat doom-user-dir "snippets/")
+                         (concat doom-emacs-dir ".local/etc/yasnippet/snippets/")))
+#+end_src
 ** :lang
 *** latex
 **** pdf 预览
@@ -126,9 +156,12 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
   ))
 #+END_SRC
 *** org
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle no
+:END:
 **** +roam2
 ***** Directories
-#+begin_src emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
+#+begin_src emacs-lisp 
 (after! org-roam
   :init
   (setq org-roam-directory "~/Seafile/Projects/org/pages")
@@ -185,9 +218,6 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
   (setq mode-line-mule-info '((:eval (rime-lighter))))); 临时启用英文提示
 #+end_src
 ** [[https://github.com/laishulu/emacs-smart-input-source/tree/master][smart-input-source]]
-:PROPERTIES:
-:header-args:emacs-lisp: :tangle yes
-:END:
 注意！ windows 11 系统下要开启输入法兼容性模式
 #+begin_src emacs-lisp
 (use-package! sis
@@ -206,13 +236,11 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
 #+end_src
 * 其他 (Miscellaneous)
 ** windows
-:PROPERTIES:
-:header-args:emacs-lisp: :tangle (if (eq system-type 'windows-nt) "yes" "no")
-:END:
 *** 指定临时文件夹
 windows 系统访问权限的原因 emacs 不一定能访问 temp 文件夹，这会导致 org-latex-preview 无法工作，故重新指定临时文件夹。参考[[https://emacs-china.org/t/emacs/21689][emacs 笔记问题（数学、物理），希望大家不吝赐教 （预览以及插入问题）。]]
 #+begin_src emacs-lisp
-(setq temporary-file-directory "~/.opt/emacs_temp")
+(when (eq system-type 'windows-nt)
+  (setq temporary-file-directory "~/AppData/LocalLow/Temp/"))
 #+end_src
 ** wsl(已经弃用)
 :PROPERTIES:
