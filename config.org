@@ -1,94 +1,64 @@
 #+TITLE: Doom emacs config
 #+AUTHOR: atwist227
-#+PROPERTY: header-args:emacs-lisp :tangle config.el
-#+STARTUP: show2levels
+#+STARTUP: show3levels
 
 本文档是我的 Doom Emacs 配置文件。
-使用命令 ~M-x org-babel-tangle~ 生成配置文件。
-
+在 Doom Emacs 中开启模组 literature 即可在每次保存文件或运行 doom sync 命令时自动生成 config.el.
 * 基础设置 (General Settings)
-** 启用词法绑定
-与动态绑定 (Dynamic Binding) 不同，不受调用栈影响。
-#+begin_src emacs-lisp
+** 文件头
+lexical-binding
+#+begin_src elisp
 ;;; config.el -*- lexical-binding: t; -*-
 #+end_src
 
-** literature config
-#+begin_src emacs-lisp
-;; 自动将 config.org tangle 成 config.el
-(defun my/tangle-config-org ()
-  "Tangle config.org into config.el whenever saving."
-  (when (and buffer-file-name
-             (string-equal (file-truename buffer-file-name)
-                           (file-truename (expand-file-name "config.org" doom-user-dir))))
-    (let ((org-confirm-babel-evaluate nil))
-      (org-babel-tangle)
-      ;; (message "Tangling %s → config.el done." buffer-file-name)
-      )))
+package.el
+#+begin_src elisp :tangle packages.el
+;; -*- no-byte-compile: t; -*-
+#+end_src
 
-(add-hook 'after-save-hook #'my/tangle-config-org)
-#+end_src
-** 编辑行为 (Editing Behavior)
-#+begin_src emacs-lisp
-(show-smartparens-mode 1)
-#+end_src
-*** 开启自动保存和备份
-#+BEGIN_SRC emacs-lisp
+** 基本设置
+#+begin_src elisp
+(show-paren-mode t)
+
 (setq auto-save-default t
       make-backup-files t)
-#+END_SRC
 
-*** 关闭退出 Emacs 时的确认提示
-#+BEGIN_SRC emacs-lisp
 (setq confirm-kill-emacs nil)
-#+END_SRC
+(setq display-line-numbers-type t)
+
+;; 菜单栏(用得不熟，开着菜单适应适应)
+(menu-bar-mode 1)
+#+end_src
 
 ** 外观 (Appearance)
 *** 主题
 设置 Doom Emacs 的主题。
-#+BEGIN_SRC emacs-lisp
-(setq doom-theme 'doom-one)
-;; (setq doom-theme 'doom-vibrant)
+#+BEGIN_SRC elisp
+;; (setq doom-theme 'doom-one)
+(setq doom-theme 'doom-vibrant)
 #+END_SRC
+
 *** 窗口大小
-#+begin_src emacs-lisp
+#+begin_src elisp :tangle no
 (add-to-list 'initial-frame-alist '(width . 80))
 (add-to-list 'initial-frame-alist '(height . 36))
 #+end_src
-*** 字体
-**** 安装 Nerd 字体
-Linux 下 =JetBrains Mono= 字体下载脚本
-#+begin_src bash
-mkdir -p ~/.local/share/fonts
-wget -O ~/.local/share/fonts/JetBrainsMono.zip https://download.jetbrains.com/fonts/JetBrainsMono.zip
-unzip ~/.local/share/fonts/JetBrainsMono.zip -d ~/.local/share/fonts
-rm ~/.local/share/fonts/JetBrainsMono.zip
-fc-cache -fv
-#+end_src
-**** Windows 系统字体配置
-#+BEGIN_SRC emacs-lisp :tangle (if (eq system-type 'windows-nt) "yes" "no")
-(setq doom-font (font-spec :family "SauceCodePro NF" :size 13.0))
-(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans SC" :size 14.0))
-#+END_SRC
-**** Linux 系统字体配置
-#+begin_src emacs-lisp :tangle (if (eq system-type 'gnu/linux) "yes" "no")
-(setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
-(set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0))
-#+end_src
-*** 开启行号显示
-#+BEGIN_SRC emacs-lisp
-(setq display-line-numbers-type t)
-#+END_SRC
 
-菜单栏和标签栏
-#+begin_src emacs-lisp
-(menu-bar-mode 1)
-(tab-bar-mode 1)
+*** 字体
+#+BEGIN_SRC elisp
+(when (eq system-type 'windows-nt)
+  (setq doom-font (font-spec :family "SauceCodePro NF" :size 13.0))
+  (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans SC" :size 14.0)))
+
+(when (eq system-type 'gnu/linux)
+  (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
+  (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0)))
 #+end_src
+
 * Doom 模块配置 (Doom Module Configuration)
 ** :editor
 *** evil
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 (after! evil
   (setq evil-move-cursor-back nil     ; don't move the block cursor when toggling insert mode
         evil-kill-on-visual-paste nil ; don't put overwritten text in the kill ring
@@ -97,42 +67,38 @@ fc-cache -fv
         ;; evil-want-minibuffer t
         +evil-want-o/O-to-continue-comments nil))
 #+END_SRC
+
 *** snippets
-#+begin_src emacs-lisp :tangle no
+#+begin_src elisp :tangle no
 (setq yas-snippet-dirs '((concat doom-user-dir "snippets/")
                          (concat doom-emacs-dir ".local/etc/yasnippet/snippets/")))
 #+end_src
+
 ** :lang
 *** latex
 **** pdf 预览
-***** TODO pdf-tools
-不喜欢 pdf-tools 非平滑滚动，以后更换
-pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emacs 中执行命令 ~M-x pdf-tools-install~ 即可安装。
-关于 pdf-tools 的配置。
-#+BEGIN_SRC emacs-lisp :header-args:emacs-lisp: :tangle (if (eq system-type 'gnu/linux) "yes" "no")
+#+BEGIN_SRC elisp
 (after! tex
-  (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
-#+END_SRC
-***** Sumatra PDF (windows)
-*正向跳转配置*
-#+begin_src emacs-lisp
-(after! tex
-  (setq TeX-view-program-list
-        '(("Sumatra PDF" ("\"%LOCALAPPDATA%/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
-  (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF")))
+  (when (eq system-type 'gnu/linux)
+    (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
+    (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+    ;; 适应页面宽度
+    (add-hook 'pdf-view-mode-hook 'pdf-view-fit-width-to-window))
+  (when (eq system-type 'windows-nt)
+    (setq TeX-view-program-list
+          '(("Sumatra PDF" ("\"%LOCALAPPDATA%/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
+    (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF"))))
 #+end_src
-*反向跳转* 需要在 Sumatra PDF “设置” > “选项” > “设置反向搜索命令行” 中配置
-#+begin_src bash
+
+pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emacs 中执行命令 ~M-x pdf-tools-install~ 即可安装。
+
+Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > “设置反向搜索命令行” 中配置
+#+begin_src bash :tangle no
 "C:\msys64\mingw64\bin\emacsclientw.exe" -n +%l "%f"
 #+end_src
-**** 输入 ^ _ 后自动插入花括号
-#+begin_src emacs-lisp
-(after! tex
-  (setq TeX-electric-sub-and-superscript t))
-#+end_src
+
 **** cdlatex
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 (after! cdlatex
   (map! :map cdlatex-mode-map
         :i "TAB" #'cdlatex-tab)
@@ -155,13 +121,14 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
        ;;  )
   ))
 #+END_SRC
+
 *** org
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle no
+:header-args:elisp: :tangle no
 :END:
 **** +roam2
 ***** Directories
-#+begin_src emacs-lisp 
+#+begin_src elisp
 (after! org-roam
   :init
   (setq org-roam-directory "~/Seafile/Projects/org/pages")
@@ -171,7 +138,7 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
   )
 #+end_src
 ***** org-roam-ui
-#+begin_src emacs-lisp
+#+begin_src elisp
 (use-package! websocket
     :after org-roam)
 
@@ -188,38 +155,17 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
           org-roam-ui-open-on-start t))
 #+end_src
 **** 关闭上下标预览
-#+begin_src emacs-lisp
+#+begin_src elisp
 (setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
 * 其他包 (other packages)
-** [[https://github.com/DogLooksGood/emacs-rime][emacs-rime]] (弃用, 改用 sis 更统一和方便设置)
-:PROPERTIES:
-:header-args:emacs-lisp: :tangle no
-:END:
-仅在 linux 系统下使用（为了匹配 wsl 选择了 emacs 内置输入法）。
-*** 设置默认输入法为 rime
-#+begin_src emacs-lisp
-(setq default-input-method "rime")
-#+end_src
-*** 基本设置
-#+begin_src emacs-lisp
-(after! rime
-  (setq rime-show-candidate 'posframe)
-  (setq rime-user-data-dir "~/.local/share/rime/rime-data/") ; FIXME 根据主机配置调整
-  (setq rime-disable-predicates
-        '(rime-predicate-evil-mode-p
-          rime-predicate-org-latex-mode-p
-          rime-predicate-tex-math-or-command-p
-          rime-predicate-in-code-string-p
-          rime-predicate-after-alphabet-char-p
-          rime-predicate-space-after-cc-p
-          rime-predicate-punctuation-line-begin-p
-          rime-predicate-punctuation-after-ascii-p))
-  (setq mode-line-mule-info '((:eval (rime-lighter))))); 临时启用英文提示
-#+end_src
 ** [[https://github.com/laishulu/emacs-smart-input-source/tree/master][smart-input-source]]
+#+begin_src elisp :tangle packages.el
+(package! sis)
+#+end_src
+
 注意！ windows 11 系统下要开启输入法兼容性模式
-#+begin_src emacs-lisp
+#+begin_src elisp
 (use-package! sis
   :init
   (if (eq system-type 'gnu/linux)
@@ -234,27 +180,23 @@ pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emac
   ;; 为所有缓冲区启用 /inline english/ 模式
   (sis-global-inline-mode t))
 #+end_src
+
 * 其他 (Miscellaneous)
 ** windows
 *** 指定临时文件夹
 windows 系统访问权限的原因 emacs 不一定能访问 temp 文件夹，这会导致 org-latex-preview 无法工作，故重新指定临时文件夹。参考[[https://emacs-china.org/t/emacs/21689][emacs 笔记问题（数学、物理），希望大家不吝赐教 （预览以及插入问题）。]]
-#+begin_src emacs-lisp
+#+begin_src elisp
 (when (eq system-type 'windows-nt)
   (setq temporary-file-directory "~/AppData/LocalLow/Temp/"))
 #+end_src
+
 ** wsl(已经弃用)
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle no
+:header-args:elisp: :tangle no
 :END:
 *** 修复 Wayland 环境下的 PGTK 算术溢出错误
 也是 org-latex-preview 使用中发现的问题，参考[[https://emacs-china.org/t/wslg-x-display-mm-height-0/22547/1][WSLg下 (x-display-mm-height)返回0（异常）]]
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 (setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
 #+END_SRC
-** 快捷键设置
-*** <SPC><TAB>切换输入法,<SPC><\>依旧可以使用(弃用)
-#+BEGIN_SRC emacs-lisp :tangle no
-(map! :leader
-      :desc "Toggle input method"
-      "TAB" #'toggle-input-method)
-#+END_SRC
+
