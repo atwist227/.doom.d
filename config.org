@@ -7,17 +7,17 @@
 * 基础设置 (General Settings)
 ** 文件头
 lexical-binding
-#+begin_src elisp
+#+begin_src emacs-lisp
 ;;; config.el -*- lexical-binding: t; -*-
 #+end_src
 
 package.el
-#+begin_src elisp :tangle packages.el
+#+begin_src emacs-lisp :tangle packages.el
 ;; -*- no-byte-compile: t; -*-
 #+end_src
 
 ** 基本设置
-#+begin_src elisp
+#+begin_src emacs-lisp
 (show-paren-mode t)
 
 (setq auto-save-default t
@@ -30,27 +30,38 @@ package.el
 (menu-bar-mode 1)
 #+end_src
 
+** 识别系统/机器类型
+#+begin_src emacs-lisp
+  (setq my/is-windows (eq system-type 'windows-nt)) ; Windows 系统
+  (setq my/is-linux (eq system-type 'gnu/linux)) ; Linux 系统
+  (setq my/is-WSL
+        (and (eq system-type 'gnu/linux)
+             (string-match
+              "icrosoft"
+              (shell-command-to-string "uname -a"))))
+#+end_src
+
 ** 外观 (Appearance)
 *** 主题
 设置 Doom Emacs 的主题。
-#+BEGIN_SRC elisp
-;; (setq doom-theme 'doom-one)
-(setq doom-theme 'doom-vibrant)
+#+BEGIN_SRC emacs-lisp
+(setq doom-theme 'doom-one)
+;; (setq doom-theme 'doom-vibrant)
 #+END_SRC
 
 *** 窗口大小
-#+begin_src elisp :tangle no
+#+begin_src emacs-lisp :tangle no
 (add-to-list 'initial-frame-alist '(width . 80))
 (add-to-list 'initial-frame-alist '(height . 36))
 #+end_src
 
 *** 字体
-#+BEGIN_SRC elisp
-(when (eq system-type 'windows-nt)
+#+BEGIN_SRC emacs-lisp
+(when my/is-windows
   (setq doom-font (font-spec :family "SauceCodePro NF" :size 13.0))
   (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans SC" :size 14.0)))
 
-(when (eq system-type 'gnu/linux)
+(when my/is-linux
   (setq doom-font (font-spec :family "JetBrainsMono NF" :size 13.0))
   (set-fontset-font "fontset-default" 'han (font-spec :family "Noto Sans CJK SC" :size 14.0)))
 #+end_src
@@ -58,7 +69,7 @@ package.el
 * Doom 模块配置 (Doom Module Configuration)
 ** :editor
 *** evil
-#+BEGIN_SRC elisp
+#+BEGIN_SRC emacs-lisp
 (after! evil
   (setq evil-move-cursor-back nil     ; don't move the block cursor when toggling insert mode
         evil-kill-on-visual-paste nil ; don't put overwritten text in the kill ring
@@ -69,7 +80,7 @@ package.el
 #+END_SRC
 
 *** snippets
-#+begin_src elisp :tangle no
+#+begin_src emacs-lisp :tangle no
 (setq yas-snippet-dirs '((concat doom-user-dir "snippets/")
                          (concat doom-emacs-dir ".local/etc/yasnippet/snippets/")))
 #+end_src
@@ -77,17 +88,17 @@ package.el
 ** :lang
 *** latex
 **** pdf 预览
-#+BEGIN_SRC elisp
+#+BEGIN_SRC emacs-lisp
 (after! tex
-  (when (eq system-type 'gnu/linux)
-    (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
-    (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+  (when my/is-linux
+    (setq +latex-viewers '(pdf-tools evince zathura okular skim sumatrapdf))
     ;; 适应页面宽度
     (add-hook 'pdf-view-mode-hook 'pdf-view-fit-width-to-window))
-  (when (eq system-type 'windows-nt)
-    (setq TeX-view-program-list
-          '(("Sumatra PDF" ("\"%LOCALAPPDATA%/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
-    (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF"))))
+  ;; (when my/is-windows
+    ;; (setq TeX-view-program-list
+    ;;       '(("Sumatra PDF" ("\"%LOCALAPPDATA%/SumatraPDF/SumatraPDF.exe\" -reuse-instance" (mode-io-correlate " -forward-search %b %n ") " %o"))))
+  ;; (add-to-list 'TeX-view-program-selection '(output-pdf "Sumatra PDF")))
+  )
 #+end_src
 
 pdf-tools 需要 =epdfinfo server= 支持，在 linux 环境下只需要在 emacs 中执行命令 ~M-x pdf-tools-install~ 即可安装。
@@ -98,7 +109,7 @@ Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > �
 #+end_src
 
 **** cdlatex
-#+BEGIN_SRC elisp
+#+BEGIN_SRC emacs-lisp
 (after! cdlatex
   (map! :map cdlatex-mode-map
         :i "TAB" #'cdlatex-tab)
@@ -121,14 +132,13 @@ Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > �
        ;;  )
   ))
 #+END_SRC
-
 *** org
 :PROPERTIES:
-:header-args:elisp: :tangle no
+:header-args:emacs-lisp: :tangle no
 :END:
 **** +roam2
 ***** Directories
-#+begin_src elisp
+#+begin_src emacs-lisp
 (after! org-roam
   :init
   (setq org-roam-directory "~/Seafile/Projects/org/pages")
@@ -138,7 +148,7 @@ Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > �
   )
 #+end_src
 ***** org-roam-ui
-#+begin_src elisp
+#+begin_src emacs-lisp
 (use-package! websocket
     :after org-roam)
 
@@ -155,20 +165,20 @@ Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > �
           org-roam-ui-open-on-start t))
 #+end_src
 **** 关闭上下标预览
-#+begin_src elisp
+#+begin_src emacs-lisp
 (setq org-pretty-entities-include-sub-superscripts nil)
 #+end_src
 * 其他包 (other packages)
 ** [[https://github.com/laishulu/emacs-smart-input-source/tree/master][smart-input-source]]
-#+begin_src elisp :tangle packages.el
+#+begin_src emacs-lisp :tangle packages.el
 (package! sis)
 #+end_src
 
 注意！ windows 11 系统下要开启输入法兼容性模式
-#+begin_src elisp
+#+begin_src emacs-lisp
 (use-package! sis
   :init
-  (if (eq system-type 'gnu/linux)
+  (if my/is-linux
       (sis-ism-lazyman-config "1" "2" 'fcitx5))
   :config
   ;; 启用 /光标颜色/ 模式
@@ -185,18 +195,16 @@ Sumatra PDF *反向跳转* 需要在 Sumatra PDF “设置” > “选项” > �
 ** windows
 *** 指定临时文件夹
 windows 系统访问权限的原因 emacs 不一定能访问 temp 文件夹，这会导致 org-latex-preview 无法工作，故重新指定临时文件夹。参考[[https://emacs-china.org/t/emacs/21689][emacs 笔记问题（数学、物理），希望大家不吝赐教 （预览以及插入问题）。]]
-#+begin_src elisp
-(when (eq system-type 'windows-nt)
+#+begin_src emacs-lisp
+(when my/is-windows
   (setq temporary-file-directory "~/AppData/LocalLow/Temp/"))
 #+end_src
 
-** wsl(已经弃用)
-:PROPERTIES:
-:header-args:elisp: :tangle no
-:END:
+** wsl
 *** 修复 Wayland 环境下的 PGTK 算术溢出错误
 也是 org-latex-preview 使用中发现的问题，参考[[https://emacs-china.org/t/wslg-x-display-mm-height-0/22547/1][WSLg下 (x-display-mm-height)返回0（异常）]]
-#+BEGIN_SRC elisp
-(setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260))))
+#+BEGIN_SRC emacs-lisp
+(when my/is-WSL
+    (setq display-mm-dimensions-alist '(("wayland-0" . (366 . 260)))))
 #+END_SRC
 
